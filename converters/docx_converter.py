@@ -1,6 +1,7 @@
-import docx
-import re
 import logging
+import os
+import re
+from docx import Document
 
 logger = logging.getLogger(__name__)
 
@@ -18,61 +19,55 @@ def convert_docx_to_markdown(file_path, use_llm=False):
     logger.debug(f"Converting DOCX file: {file_path}")
     
     try:
-        doc = docx.Document(file_path)
-        markdown_text = ""
+        # Get the filename without extension for use as title
+        file_name = os.path.basename(file_path)
+        file_name_without_ext = os.path.splitext(file_name)[0]
         
-        # Process document paragraphs
+        # Open the document
+        doc = Document(file_path)
+        
+        # Start with a title
+        markdown_text = f"# {file_name_without_ext}\n\n"
+        
+        # Process paragraphs - check for headings based on style
         for para in doc.paragraphs:
             if not para.text.strip():
                 continue
-                
-            # Check paragraph style for headings
+            
+            # Check if paragraph is a heading
             if para.style.name.startswith('Heading'):
-                level = int(para.style.name.replace('Heading', ''))
-                markdown_text += f"{'#' * level} {para.text.strip()}\n\n"
-            
-            # Check for bullet lists
-            elif para.style.name.startswith('List Bullet'):
-                markdown_text += f"* {para.text.strip()}\n"
-            
-            # Check for numbered lists
-            elif para.style.name.startswith('List Number'):
-                # Extract number from text if possible
-                match = re.match(r'^\s*(\d+)[\.)]?\s+(.+)$', para.text.strip())
-                if match:
-                    number, text = match.groups()
-                    markdown_text += f"{number}. {text}\n"
-                else:
-                    markdown_text += f"1. {para.text.strip()}\n"
-            
-            # Regular paragraph
-            else:
-                # Check for bold and italic formatting
-                text = para.text
-                for run in para.runs:
-                    if run.bold and run.italic:
-                        text = text.replace(run.text, f"***{run.text}***")
-                    elif run.bold:
-                        text = text.replace(run.text, f"**{run.text}**")
-                    elif run.italic:
-                        text = text.replace(run.text, f"*{run.text}*")
+                # Extract heading level from style name
+                try:
+                    level = int(para.style.name.replace('Heading', ''))
+                except ValueError:
+                    level = 2  # Default to heading level 2 if we can't parse level
                 
-                markdown_text += f"{text.strip()}\n\n"
+                # Add appropriate heading markers
+                markdown_text += f"{'#' * (level + 1)} {para.text.strip()}\n\n"
+            else:
+                # Regular paragraph
+                markdown_text += f"{para.text.strip()}\n\n"
         
         # Process tables
         for table in doc.tables:
-            # Create table headers
-            header_row = table.rows[0]
-            headers = [cell.text.strip() for cell in header_row.cells]
+            # Count cells in the first row to determine columns
+            if not table.rows:
+                continue
+                
+            # Get all cells from first row for headers
+            headers = []
+            for cell in table.rows[0].cells:
+                headers.append(cell.text.strip())
             
+            # Add table headers
             markdown_text += "| " + " | ".join(headers) + " |\n"
             markdown_text += "| " + " | ".join(["---"] * len(headers)) + " |\n"
             
-            # Create table rows
-            for i, row in enumerate(table.rows):
-                if i == 0:  # Skip header row
-                    continue
-                cells = [cell.text.strip() for cell in row.cells]
+            # Add data rows (skip the header row)
+            for row in table.rows[1:]:
+                cells = []
+                for cell in row.cells:
+                    cells.append(cell.text.strip())
                 markdown_text += "| " + " | ".join(cells) + " |\n"
             
             markdown_text += "\n"

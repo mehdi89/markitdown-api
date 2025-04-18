@@ -1,1 +1,4 @@
-# This file makes the converters directory a Python package
+# Converters package initialization
+import logging
+
+logger = logging.getLogger(__name__)

@@ -1,5 +1,6 @@
-import re
 import logging
+import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -14,69 +15,111 @@ def convert_txt_to_markdown(file_path, use_llm=False):
     Returns:
         str: Markdown content
     """
-    logger.debug(f"Converting TXT file: {file_path}")
+    logger.debug(f"Converting text file: {file_path}")
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
+        # Get the filename without extension for use as title
+        file_name = os.path.basename(file_path)
+        file_name_without_ext = os.path.splitext(file_name)[0]
         
-        # Simple heuristics to identify structure in plain text
-        markdown_text = ""
-        lines = content.split('\n')
+        # Read the text file
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as file:
+            text_content = file.read()
         
-        i = 0
-        while i < len(lines):
-            line = lines[i].strip()
+        # Start with a title
+        markdown_text = f"# {file_name_without_ext}\n\n"
+        
+        # Process content - try to identify structure
+        lines = text_content.split('\n')
+        
+        # Process each line
+        current_paragraph = ""
+        in_code_block = False
+        in_list = False
+        
+        for line in lines:
+            line = line.rstrip()
             
-            # Skip empty lines
-            if not line:
-                markdown_text += "\n"
-                i += 1
+            # Skip empty lines but respect paragraph breaks
+            if not line.strip():
+                if current_paragraph:
+                    markdown_text += current_paragraph + "\n\n"
+                    current_paragraph = ""
+                elif in_list:
+                    in_list = False
+                    markdown_text += "\n"
                 continue
             
-            # Check for headings (all caps, short line)
-            if len(line) < 100 and line.isupper() and len(line) > 3:
+            # Check for potential code blocks (indented by 4+ spaces or tabs)
+            if line.startswith('    ') or line.startswith('\t'):
+                if not in_code_block and current_paragraph:
+                    markdown_text += current_paragraph + "\n\n"
+                    current_paragraph = ""
+                
+                if not in_code_block:
+                    in_code_block = True
+                    markdown_text += "```\n"
+                
+                markdown_text += line.lstrip() + "\n"
+                continue
+            
+            # End code block if needed
+            if in_code_block and not (line.startswith('    ') or line.startswith('\t')):
+                in_code_block = False
+                markdown_text += "```\n\n"
+            
+            # Check if this might be a heading (all caps, short line)
+            if len(line) < 50 and line.isupper():
+                if current_paragraph:
+                    markdown_text += current_paragraph + "\n\n"
+                    current_paragraph = ""
                 markdown_text += f"## {line}\n\n"
+                continue
             
-            # Check for numbered lists
-            elif re.match(r'^\s*\d+[\.\)]\s', line):
-                # This looks like a numbered list item
+            # Check if this might be a bullet point
+            if line.strip().startswith(('•', '-', '*', '+')):
+                if current_paragraph and not in_list:
+                    markdown_text += current_paragraph + "\n\n"
+                    current_paragraph = ""
+                
+                in_list = True
                 markdown_text += line + "\n"
+                continue
             
-            # Check for bullet lists
-            elif re.match(r'^\s*[\*\-\•]\s', line):
-                # This looks like a bullet list item
-                markdown_text += line + "\n"
+            # If we were in a list but this line doesn't start with a bullet
+            if in_list and not line.strip().startswith(('•', '-', '*', '+')):
+                in_list = False
+                markdown_text += "\n"
             
-            # Check for potential section titles (shorter lines followed by longer paragraphs)
-            elif (i+1 < len(lines) and 
-                  len(line) < 80 and 
-                  len(lines[i+1].strip()) > 100):
-                markdown_text += f"### {line}\n\n"
-            
-            # Regular paragraph
-            else:
-                # Check if this is part of a continuing paragraph
-                if (i > 0 and 
-                    lines[i-1].strip() and 
-                    not re.match(r'^\s*[\*\-\•\d]', lines[i-1]) and
-                    not re.match(r'^\s*[\*\-\•\d]', line)):
-                    # Continue paragraph without extra newline
-                    markdown_text += line + "\n"
+            # Regular paragraph content
+            if current_paragraph:
+                # Check if this is a continuation of the paragraph
+                if not line.endswith(('.', '!', '?', ':', ';')):
+                    current_paragraph += " " + line
                 else:
-                    # New paragraph
-                    markdown_text += line + "\n\n"
-            
-            i += 1
+                    # End of sentence
+                    current_paragraph += " " + line
+                    markdown_text += current_paragraph + "\n\n"
+                    current_paragraph = ""
+            else:
+                current_paragraph = line
+        
+        # Add any remaining paragraph
+        if current_paragraph:
+            markdown_text += current_paragraph + "\n\n"
+        
+        # End any open code block
+        if in_code_block:
+            markdown_text += "```\n\n"
         
         # Clean up multiple newlines
         markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
         
         if use_llm:
-            logger.info("LLM enhancement requested but not implemented for TXT")
+            logger.info("LLM enhancement requested but not implemented for text files")
         
         return markdown_text
     
     except Exception as e:
-        logger.error(f"Error converting TXT to Markdown: {str(e)}")
-        raise Exception(f"TXT conversion error: {str(e)}")
+        logger.error(f"Error converting text to Markdown: {str(e)}")
+        raise Exception(f"Text conversion error: {str(e)}")

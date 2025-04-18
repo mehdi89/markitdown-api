@@ -1,6 +1,7 @@
-import PyPDF2
-import re
 import logging
+import os
+import re
+import PyPDF2
 
 logger = logging.getLogger(__name__)
 
@@ -18,64 +19,70 @@ def convert_pdf_to_markdown(file_path, use_llm=False):
     logger.debug(f"Converting PDF file: {file_path}")
     
     try:
-        with open(file_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
-            markdown_text = ""
+        # Get the filename without extension for use as title
+        file_name = os.path.basename(file_path)
+        file_name_without_ext = os.path.splitext(file_name)[0]
+        
+        # Start with a title
+        markdown_text = f"# {file_name_without_ext}\n\n"
+        
+        # Open the PDF file
+        with open(file_path, 'rb') as pdf_file:
+            # Create a PDF reader object
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            
+            # Get the number of pages
+            num_pages = len(pdf_reader.pages)
+            
+            # Add a summary of the PDF
+            markdown_text += f"## PDF Overview\n\n"
+            markdown_text += f"- **Pages**: {num_pages}\n\n"
             
             # Extract text from each page
-            for page_num in range(len(reader.pages)):
-                page = reader.pages[page_num]
+            markdown_text += f"## Content\n\n"
+            
+            for page_num in range(num_pages):
+                page = pdf_reader.pages[page_num]
                 text = page.extract_text()
                 
-                if text:
-                    # Add page number as heading
-                    markdown_text += f"## Page {page_num + 1}\n\n"
+                if text.strip():
+                    markdown_text += f"### Page {page_num + 1}\n\n"
                     
-                    # Process the extracted text into paragraphs
-                    paragraphs = re.split(r'\n\s*\n', text)
+                    # Process the extracted text
+                    # Split into paragraphs
+                    paragraphs = text.split('\n\n')
+                    
                     for paragraph in paragraphs:
                         # Skip empty paragraphs
                         if not paragraph.strip():
                             continue
-                        
-                        # Check if this might be a heading (all caps, short line)
-                        if len(paragraph) < 100 and paragraph.isupper():
-                            markdown_text += f"### {paragraph.strip()}\n\n"
-                        # Check if this might be a list item
-                        elif re.match(r'^\s*[•\-\*]\s', paragraph):
-                            # Convert bullet points
-                            lines = paragraph.split('\n')
-                            for line in lines:
-                                if re.match(r'^\s*[•\-\*]\s', line):
-                                    markdown_text += f"* {line.strip()[1:].strip()}\n"
-                                else:
-                                    markdown_text += f"{line.strip()}\n"
-                            markdown_text += "\n"
-                        # Check if this might be a numbered list
-                        elif re.match(r'^\s*\d+[\.\)]\s', paragraph):
-                            # Convert numbered lists
-                            lines = paragraph.split('\n')
-                            for line in lines:
-                                if re.match(r'^\s*\d+[\.\)]\s', line):
-                                    number_match = re.match(r'^\s*(\d+)[\.\)]\s', line)
-                                    if number_match:
-                                        number = number_match.group(1)
-                                        markdown_text += f"{number}. {line.strip()[len(number)+1:].strip()}\n"
-                                else:
-                                    markdown_text += f"{line.strip()}\n"
-                            markdown_text += "\n"
-                        else:
-                            # Regular paragraph
-                            markdown_text += f"{paragraph.strip()}\n\n"
-            
-            # Clean up multiple newlines and spaces
-            markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
-            markdown_text = re.sub(r' {2,}', ' ', markdown_text)
-            
-            if use_llm:
-                logger.info("LLM enhancement requested but not implemented for PDF")
-            
-            return markdown_text
+                            
+                        # Check if this might be a heading (short, all caps or ends with colon)
+                        lines = paragraph.split('\n')
+                        for line in lines:
+                            line = line.strip()
+                            if not line:
+                                continue
+                                
+                            # Potential heading detection
+                            if (len(line) < 50 and (line.isupper() or line.rstrip().endswith(':'))):
+                                markdown_text += f"#### {line}\n\n"
+                            else:
+                                # Regular paragraph
+                                markdown_text += f"{line}\n\n"
+                    
+                    markdown_text += "\n"
+                else:
+                    markdown_text += f"### Page {page_num + 1}\n\n"
+                    markdown_text += "*No extractable text found on this page (might be an image or scanned content)*\n\n"
+        
+        # Clean up multiple newlines
+        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
+        
+        if use_llm:
+            logger.info("LLM enhancement requested but not implemented for PDF")
+        
+        return markdown_text
     
     except Exception as e:
         logger.error(f"Error converting PDF to Markdown: {str(e)}")
