@@ -1,0 +1,78 @@
+/* Custom styles to complement Bootstrap */
+
+.file-upload-wrapper {
+    border: 2px dashed var(--bs-secondary);
+    border-radius: 5px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.file-upload-wrapper:hover {
+    border-color: var(--bs-primary);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.file-upload-wrapper.drag-over {
+    border-color: var(--bs-success);
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+#markdown-output {
+    min-height: 200px;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: var(--bs-primary);
+    margin-bottom: 1rem;
+}
+
+.api-endpoint {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+    padding: 0.75rem;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.response-example {
+    background-color: var(--bs-dark);
+    color: var(--bs-success);
+    padding: 0.75rem;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.error-example {
+    background-color: var(--bs-dark);
+    color: var(--bs-danger);
+    padding: 0.75rem;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    opacity: 0.7;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+}
+
+.output-container {
+    position: relative;
+}
+
+.loading-spinner {
+    display: none;
+}

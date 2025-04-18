@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkItDown - API Documentation</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-markdown"></i> MarkItDown
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/documentation">Documentation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/markitdown/convert" target="_blank">GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div class="sticky-top pt-2" style="top: 20px;">
+                    <div class="list-group">
+                        <a href="#introduction" class="list-group-item list-group-item-action">Introduction</a>
+                        <a href="#supported-formats" class="list-group-item list-group-item-action">Supported Formats</a>
+                        <a href="#api-reference" class="list-group-item list-group-item-action">API Reference</a>
+                        <a href="#examples" class="list-group-item list-group-item-action">Examples</a>
+                        <a href="#error-handling" class="list-group-item list-group-item-action">Error Handling</a>
+                        <a href="#llm-features" class="list-group-item list-group-item-action">LLM Features</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <h1 class="mb-4">API Documentation</h1>
+                
+                <section id="introduction" class="mb-5">
+                    <h2 class="border-bottom pb-2">Introduction</h2>
+                    <p class="lead">
+                        MarkItDown is an API service that converts various file formats to clean, well-formatted Markdown.
+                    </p>
+                    <p>
+                        The service extracts content from uploaded files and transforms it into structured Markdown, preserving
+                        formatting elements such as headings, lists, tables, and more depending on the input format.
+                    </p>
+                </section>
+                
+                <section id="supported-formats" class="mb-5">
+                    <h2 class="border-bottom pb-2">Supported Formats</h2>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Format</th>
+                                    <th>Extensions</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>HTML</td>
+                                    <td>.html, .htm</td>
+                                    <td>Converts HTML documents to Markdown, preserving structure and formatting.</td>
+                                </tr>
+                                <tr>
+                                    <td>PDF</td>
+                                    <td>.pdf</td>
+                                    <td>Extracts text content from PDF files, attempts to preserve document structure.</td>
+                                </tr>
+                                <tr>
+                                    <td>Microsoft Word</td>
+                                    <td>.docx, .doc</td>
+                                    <td>Converts Word documents to Markdown, preserving headings, lists, and basic formatting.</td>
+                                </tr>
+                                <tr>
+                                    <td>Plain Text</td>
+                                    <td>.txt, .md, .markdown</td>
+                                    <td>Processes plain text files, detecting and enhancing structure when possible.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <section id="api-reference" class="mb-5">
+                    <h2 class="border-bottom pb-2">API Reference</h2>
+                    
+                    <h4 class="mt-4">Convert Endpoint</h4>
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <strong>POST /api/convert</strong>
+                        </div>
+                        <div class="card-body">
+                            <p>Converts an uploaded file to Markdown format.</p>
+                            
+                            <h5>Request</h5>
+                            <p>Content-Type: multipart/form-data</p>
+                            
+                            <h6>Parameters:</h6>
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item">
+                                    <strong>file</strong> <span class="badge bg-primary">required</span>
+                                    <p class="mb-0">The file to convert (must be one of the supported formats).</p>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>use_llm</strong> <span class="badge bg-secondary">optional</span>
+                                    <p class="mb-0">Enable LLM features for enhanced conversion (defaults to false).</p>
+                                </li>
+                            </ul>
+                            
+                            <h5>Response</h5>
+                            <p>Content-Type: application/json</p>
+                            
+                            <h6>Success Response (200 OK):</h6>
+                            <pre class="response-example">{
+  "success": true,
+  "markdown": "# Converted Document\n\nThis is a paragraph...",
+  "original_filename": "example.docx"
+}</pre>
+                            
+                            <h6>Error Response (400 Bad Request):</h6>
+                            <pre class="error-example">{
+  "error": "Unsupported file format",
+  "supported_formats": ["html", "htm", "pdf", "docx", "doc", "txt", "md", "markdown"]
+}</pre>
+                            
+                            <h6>Error Response (500 Internal Server Error):</h6>
+                            <pre class="error-example">{
+  "error": "Error processing file",
+  "message": "Detailed error message"
+}</pre>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="examples" class="mb-5">
+                    <h2 class="border-bottom pb-2">Examples</h2>
+                    
+                    <h4 class="mt-4">cURL Example</h4>
+                    <div class="api-endpoint mb-4">
+                        <pre>curl -X POST https://markitdown.example.com/api/convert \
+  -F "file=@document.pdf" \
+  -F "use_llm=false"</pre>
+                    </div>
+                    
+                    <h4 class="mt-4">Python Example</h4>
+                    <div class="api-endpoint mb-4">
+                        <pre>import requests
+
+url = 'https://markitdown.example.com/api/convert'
+files = {'file': open('document.docx', 'rb')}
+data = {'use_llm': 'false'}
+
+response = requests.post(url, files=files, data=data)
+result = response.json()
+
+if response.status_code == 200:
+    markdown_content = result['markdown']
+    print(markdown_content)
+else:
+    print(f"Error: {result['error']}")</pre>
+                    </div>
+                    
+                    <h4 class="mt-4">JavaScript Example</h4>
+                    <div class="api-endpoint mb-4">
+                        <pre>const form = new FormData();
+form.append('file', fileInput.files[0]);
+form.append('use_llm', 'false');
+
+fetch('https://markitdown.example.com/api/convert', {
+  method: 'POST',
+  body: form
+})
+.then(response => response.json())
+.then(data => {
+  if (data.success) {
+    console.log(data.markdown);
+  } else {
+    console.error(data.error);
+  }
+})
+.catch(error => console.error('Error:', error));</pre>
+                    </div>
+                </section>
+                
+                <section id="error-handling" class="mb-5">
+                    <h2 class="border-bottom pb-2">Error Handling</h2>
+                    
+                    <p>The API returns appropriate HTTP status codes along with error messages in JSON format:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Status Code</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>200 OK</td>
+                                    <td>Successful conversion</td>
+                                </tr>
+                                <tr>
+                                    <td>400 Bad Request</td>
+                                    <td>Missing file, empty file, or unsupported format</td>
+                                </tr>
+                                <tr>
+                                    <td>500 Internal Server Error</td>
+                                    <td>Error processing file or server issues</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <p class="mt-3">
+                        Error responses include an <code>error</code> field with a descriptive message and may include additional
+                        information fields such as <code>supported_formats</code> for format errors.
+                    </p>
+                </section>
+                
+                <section id="llm-features" class="mb-5">
+                    <h2 class="border-bottom pb-2">LLM Features</h2>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        LLM features are experimental and may not be available for all file formats.
+                    </div>
+                    
+                    <p>
+                        The API includes an optional <code>use_llm</code> parameter that enables Large Language Model features for enhanced conversion.
+                        When enabled, the API uses advanced AI models to:
+                    </p>
+                    
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item">Improve structure detection in plain text</li>
+                        <li class="list-group-item">Enhance formatting in PDF content extraction</li>
+                        <li class="list-group-item">Detect and preserve more complex elements like tables</li>
+                        <li class="list-group-item">Generate better heading hierarchies</li>
+                    </ul>
+                    
+                    <p>
+                        To enable LLM features, set the <code>use_llm</code> parameter to <code>true</code> when making API requests.
+                    </p>
+                </section>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-dark text-center text-white-50 py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">MarkItDown - Open Source File to Markdown Converter</p>
+            <p class="small mb-0 mt-2">
+                <a href="https://github.com/markitdown/convert" class="text-white-50" target="_blank">GitHub</a> | 
+                <a href="/" class="text-white-50">Home</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
