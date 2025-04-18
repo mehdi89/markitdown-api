@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 COPY pyproject.toml ./
 
 # Install Python dependencies
-RUN pip install --no-cache-dir "$(grep -E 'name|version' pyproject.toml | awk '{print $3}' | tr -d '"' | tr '\n' ' ')" \
+RUN pip install --no-cache-dir \
     beautifulsoup4 \
     email-validator \
     flask \
@@ -26,7 +26,11 @@ RUN pip install --no-cache-dir "$(grep -E 'name|version' pyproject.toml | awk '{
     psycopg2-binary \
     pypdf2 \
     python-docx \
-    werkzeug
+    pytesseract \
+    python-pptx \
+    werkzeug \
+    openpyxl \
+    pandas
 
 # Copy application code
 COPY . .
