@@ -94,6 +94,26 @@
                                     <td>.txt, .md, .markdown</td>
                                     <td>Processes plain text files, detecting and enhancing structure when possible.</td>
                                 </tr>
+                                <tr>
+                                    <td>Excel</td>
+                                    <td>.xlsx, .xls</td>
+                                    <td>Converts Excel spreadsheets to Markdown tables, preserving data structure.</td>
+                                </tr>
+                                <tr>
+                                    <td>PowerPoint</td>
+                                    <td>.pptx, .ppt</td>
+                                    <td>Extracts content from presentations including text, bullet points, and slide structure.</td>
+                                </tr>
+                                <tr>
+                                    <td>CSV</td>
+                                    <td>.csv</td>
+                                    <td>Converts CSV data to well-formatted Markdown tables.</td>
+                                </tr>
+                                <tr>
+                                    <td>Images</td>
+                                    <td>.jpg, .jpeg, .png, .gif, .bmp, .tiff</td>
+                                    <td>Extracts text from images using OCR technology and converts to Markdown.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -138,7 +158,7 @@
                             <h6>Error Response (400 Bad Request):</h6>
                             <pre class="error-example">{
   "error": "Unsupported file format",
-  "supported_formats": ["html", "htm", "pdf", "docx", "doc", "txt", "md", "markdown"]
+  "supported_formats": ["html", "htm", "pdf", "docx", "doc", "txt", "md", "markdown", "xlsx", "xls", "pptx", "ppt", "csv", "jpg", "jpeg", "png", "gif", "bmp", "tiff"]
 }</pre>
                             
                             <h6>Error Response (500 Internal Server Error):</h6>
@@ -153,18 +173,44 @@
                 <section id="examples" class="mb-5">
                     <h2 class="border-bottom pb-2">Examples</h2>
                     
-                    <h4 class="mt-4">cURL Example</h4>
+                    <h4 class="mt-4">cURL Examples</h4>
+                    
+                    <h5>Basic Usage</h5>
+                    <div class="api-endpoint mb-3">
+                        <pre>curl -X POST http://localhost:5000/api/convert \
+  -F "file=@/path/to/document.pdf"</pre>
+                    </div>
+                    
+                    <h5>With LLM Enhancement</h5>
+                    <div class="api-endpoint mb-3">
+                        <pre>curl -X POST http://localhost:5000/api/convert \
+  -F "file=@/path/to/document.docx" \
+  -F "use_llm=true"</pre>
+                    </div>
+                    
+                    <h5>Converting HTML Content</h5>
+                    <div class="api-endpoint mb-3">
+                        <pre>curl -X POST http://localhost:5000/api/convert \
+  -F "file=@/path/to/webpage.html"</pre>
+                    </div>
+                    
+                    <h5>Converting Excel Spreadsheet</h5>
+                    <div class="api-endpoint mb-3">
+                        <pre>curl -X POST http://localhost:5000/api/convert \
+  -F "file=@/path/to/data.xlsx"</pre>
+                    </div>
+                    
+                    <h5>Image OCR Processing</h5>
                     <div class="api-endpoint mb-4">
-                        <pre>curl -X POST https://markitdown.example.com/api/convert \
-  -F "file=@document.pdf" \
-  -F "use_llm=false"</pre>
+                        <pre>curl -X POST http://localhost:5000/api/convert \
+  -F "file=@/path/to/scan.jpg"</pre>
                     </div>
                     
                     <h4 class="mt-4">Python Example</h4>
                     <div class="api-endpoint mb-4">
                         <pre>import requests
 
-url = 'https://markitdown.example.com/api/convert'
+url = 'http://localhost:5000/api/convert'
 files = {'file': open('document.docx', 'rb')}
 data = {'use_llm': 'false'}
 
@@ -174,6 +220,10 @@ result = response.json()
 if response.status_code == 200:
     markdown_content = result['markdown']
     print(markdown_content)
+    
+    # Save to file
+    with open('converted.md', 'w') as f:
+        f.write(markdown_content)
 else:
     print(f"Error: {result['error']}")</pre>
                     </div>
@@ -184,7 +234,7 @@ else:
 form.append('file', fileInput.files[0]);
 form.append('use_llm', 'false');
 
-fetch('https://markitdown.example.com/api/convert', {
+fetch('http://localhost:5000/api/convert', {
   method: 'POST',
   body: form
 })
@@ -192,6 +242,7 @@ fetch('https://markitdown.example.com/api/convert', {
 .then(data => {
   if (data.success) {
     console.log(data.markdown);
+    document.getElementById('output').textContent = data.markdown;
   } else {
     console.error(data.error);
   }
